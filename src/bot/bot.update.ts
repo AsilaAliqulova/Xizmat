@@ -21,6 +21,11 @@ export class BotUpdate {
     await this.botService.onStop(ctx);
   }
 
+  @Command("/admin")
+  async showAdminPanel(@Ctx() ctx: Context) {
+    await this.botService.showAdminPanel(ctx);
+  }
+
   @Hears(["Usta", "Mijoz"])
   async onRoleSelection(@Ctx() ctx: Context) {
     await this.botService.onRoleSelection(ctx);

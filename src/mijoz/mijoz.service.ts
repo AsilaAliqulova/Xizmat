@@ -29,7 +29,7 @@ export class MijozService {
       this.userSteps.set(userId, 0);
       this.userData.set(userId, { role: "Mijoz" });
 
-      await ctx.reply("👤 Iltimos, ismingizni kiriting:");
+      await ctx.reply("Ismingizni kiriting:");
     } catch (error) {
       console.error("registerCustomer error:", error);
     }
@@ -56,12 +56,12 @@ export class MijozService {
       switch (step) {
         case 0:
           userData.name = userInput;
-          await ctx.reply("📞 Iltimos, telefon raqamingizni kiriting:");
+          await ctx.reply("📞 Telefon raqamingizni kiriting:");
           step++;
           break;
         case 1:
           userData.phone = userInput;
-          await ctx.reply("📍 Iltimos, manzilingizni kiriting:");
+          await ctx.reply("📍 Manzilingizni kiriting:");
           step++;
           break;
         case 2:
@@ -101,7 +101,7 @@ export class MijozService {
 
   async showCustomerMenu(ctx: Context) {
     await ctx.reply(
-      "✅ Siz mijoz sifatida ro'yxatdan o'tdingiz! Endi xizmatlardan foydalanishingiz mumkin.",
+      "✅ Siz mijoz sifatida ro'yxatdan o'tdingiz! Xizmatlardan foydalanishingiz mumkin.",
       {
         parse_mode: "HTML",
         ...Markup.keyboard([
@@ -139,11 +139,10 @@ export class MijozService {
       }
 
       await ctx.reply(
-        `📄 Sizning ma'lumotlaringiz:\n\n` +
+        `📄 Ma'lumotlaringiz:\n\n` +
           `👤 Ism: <b>${user.name}</b>\n` +
           `📞 Telefon: <b>${user.telefon || "Kiritilmagan"}</b>\n` +
           `📍 Manzil: <b>${user.manzil || "Kiritilmagan"}</b>\n\n` +
-          `✏️ Ma'lumotlarni tahrirlash uchun quyidagi tugmalardan foydalaning.`,
         {
           parse_mode: "HTML",
           ...Markup.inlineKeyboard([

@@ -9,6 +9,7 @@ import { session } from "telegraf";
 import { MijozModule } from './mijoz/mijoz.module';
 import { AdminModule } from './admin/admin.module';
 import { Mijoz } from "./mijoz/models/mijoz.model";
+import { Admin } from "./admin/models/admin.model";
 
 
 @Module({
@@ -29,7 +30,7 @@ import { Mijoz } from "./mijoz/models/mijoz.model";
       port: Number(process.env.POSTGRES_PORT),
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DB,
-      models: [Bot,Mijoz],
+      models: [Bot,Mijoz,Admin],
       autoLoadModels: true,
       sync: { alter: true },
       logging: false,

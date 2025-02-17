@@ -85,15 +85,12 @@ export class BotService {
         user.status = "true";
         await user.save();
 
-        await ctx.reply(
-          `Tabriklayman, sizning akkountingiz faollashtirildi! ✅\n\nIltimos, o'z rolingizni tanlang:`,
-          {
-            parse_mode: "HTML",
-            ...Markup.keyboard([["Usta", "Mijoz"]])
-              .resize()
-              .oneTime(),
-          }
-        );
+        await ctx.reply(`\n O'z ro'lingizni tanlang:`, {
+          parse_mode: "HTML",
+          ...Markup.keyboard([["Usta", "Mijoz"]])
+            .resize()
+            .oneTime(),
+        });
       }
     }
   }
@@ -108,9 +105,7 @@ export class BotService {
       const user = await this.botModel.findByPk(userId);
 
       if (user && user.status) {
-        user.status = "false";
-        user.phone_number = "";
-        await user.save();
+        await this.botModel.destroy({ where: { userId } });
 
         await ctx.reply(`Sizni yana kutub qolamiz`, {
           parse_mode: "HTML",
@@ -141,25 +136,17 @@ export class BotService {
       user.role = role;
       await user.save();
 
-      console.log(`User ${userId} role saved as: ${role}`);
-
       await ctx.reply(`Siz <b>${role}</b> sifatida ro'yxatdan o'tdingiz! ✅`, {
         parse_mode: "HTML",
         ...Markup.removeKeyboard(),
       });
 
       if (role == "Usta") {
-        console.log(`User ${userId} chose 'Usta', now asking for specialty...`);
         await this.showSpecialties(ctx);
       } else if (role === "Mijoz") {
-        console.log(
-          `User ${userId} chose 'Mijoz', now asking for specialty...`
-        );
         await this.mijozService.registerCustomer(ctx);
       }
     } else {
-      console.log(role);
-
       await ctx.reply("Iltimos, quyidagi variantlardan birini tanlang:", {
         parse_mode: "HTML",
         ...Markup.keyboard([["Usta", "Mijoz"]])
@@ -177,8 +164,6 @@ export class BotService {
       "Soatsoz",
       "Poyabzal ustaxonasi",
     ];
-
-    console.log("Displaying specialty selection options..."); // ✅ Mutaxassislik tugmalari ko'rinayotganini tekshirish
 
     const inlineButtons = specialties.map((specialty) =>
       Markup.button.callback(specialty, `specialty_${specialty}`)
@@ -244,7 +229,7 @@ export class BotService {
     this.userSteps.set(userId, 0);
     this.userData.set(userId, {});
 
-    await ctx.reply("Iltimos, ismingizni kiriting:");
+    await ctx.reply("Ismingizni kiriting:");
   }
 
   async handleMasterResponse(ctx: Context) {
@@ -268,7 +253,7 @@ export class BotService {
       case 1:
         userData.phone = userInput;
         await ctx.reply(
-          "Ustaxona nomini kiriting (majburiy emas), yoki '❌ O'tkazish' ni bosing:",
+          "Ustaxona nomini kiriting, yoki 'O'tkazish' ni bosing:",
           {
             ...Markup.keyboard([["❌ O'tkazish"]])
               .resize()
@@ -282,7 +267,7 @@ export class BotService {
           userData.workshop = userInput;
         }
         await ctx.reply(
-          "Manzilingizni kiriting (majburiy emas), yoki '❌ O'tkazish' ni bosing:",
+          "Manzilingizni kiriting, yoki '❌ O'tkazish' ni bosing:",
           {
             ...Markup.keyboard([["❌ O'tkazish"]])
               .resize()
@@ -295,14 +280,11 @@ export class BotService {
         if (userInput !== "❌ O'tkazish") {
           userData.address = userInput;
         }
-        await ctx.reply(
-          "Mo'ljalni kiriting (majburiy emas), yoki '❌ O'tkazish' ni bosing:",
-          {
-            ...Markup.keyboard([["❌ O'tkazish"]])
-              .resize()
-              .oneTime(),
-          }
-        );
+        await ctx.reply("Mo'ljalni kiriting, yoki '❌ O'tkazish' ni bosing:", {
+          ...Markup.keyboard([["❌ O'tkazish"]])
+            .resize()
+            .oneTime(),
+        });
         step++;
         break;
       case 4:
@@ -374,7 +356,7 @@ export class BotService {
       this.userSteps.set(userId, step + 1);
       this.userData.set(userId, userData);
     } else {
-      await ctx.reply("Lokatsiyani yuborish uchun tugmani bosing 📍:");
+      await ctx.reply("Lokatsiyani yuboring 📍:");
     }
   }
 
@@ -400,7 +382,7 @@ export class BotService {
           boshlashVaqti: userData.startTime,
           yakunlashVaqti: userData.endTime,
           sarflanadiganVaqt: userData.avgTime,
-          status: "pending", // Tasdiqlash uchun holat qo'shamiz
+          status: "pending",
         },
       });
 
@@ -419,8 +401,7 @@ export class BotService {
         });
       }
 
-      // **Admin ID (o'zgartiring)**
-      const adminId = 1234567890;
+       const adminId = process.env.ADMIN_ID!;
 
       await ctx.telegram.sendMessage(
         adminId,
@@ -441,7 +422,7 @@ export class BotService {
         }
       );
 
-      // **Foydalanuvchiga xabar yuborish va tugmalarni ko'rsatish**
+    
       await ctx.reply(
         "✅ Ma'lumotlaringiz adminga jo'natildi. Tez orada tasdiqlangandan so'ng xabar beramiz.",
         {
@@ -476,128 +457,34 @@ export class BotService {
       "❌ Ro'yxatdan o'tish bekor qilindi. Qayta boshlash uchun quyidagi tugmani bosing:",
       {
         parse_mode: "HTML",
-        ...Markup.keyboard([["🔄 Ro'yxatdan o'tish"]])
+        ...Markup.keyboard([["/start"]])
           .resize()
           .oneTime(),
       }
     );
   }
 
-  // async sendVerificationOptions(ctx: Context, userId: number) {
-  //   await ctx.reply(
-  //     "✅ Tasdiqlash tugmasi bosilganda usta tomonidan kiritilgan ma'lumotlar tasdiqlash uchun adminga yuboriladi. So'ngra quyidagi tugmalar ko'rsatiladi:",
-  //     {
-  //       parse_mode: "HTML",
-  //       ...Markup.keyboard([
-  //         ["🕵️ Tekshirish"],
-  //         ["❌ Bekor qilish"],
-  //         ["📞 Admin bilan bog'lanish"],
-  //       ])
-  //         .resize()
-  //         .oneTime(),
-  //     }
-  //   );
-  // }
 
-  // async checkVerificationStatus(ctx: Context, userId: number) {
-  //   const user = await this.botModel.findByPk(userId);
-
-  //   if (!user) {
-  //     await ctx.reply(
-  //       "Siz hali ro'yxatdan o'tmagansiz. Iltimos, /start bosing."
-  //     );
-  //     return;
-  //   }
-
-  //   if (user.status === "pending") {
-  //     await ctx.reply(
-  //       "🕵️ Admin ma'lumotlaringizni hali tasdiqlamagan. Qayta tekshirish uchun kuting.",
-  //       {
-  //         parse_mode: "HTML",
-  //         ...Markup.keyboard([
-  //           ["🕵️ Tekshirish"],
-  //           ["❌ Bekor qilish"],
-  //           ["📞 Admin bilan bog'lanish"],
-  //         ])
-  //           .resize()
-  //           .oneTime(),
-  //       }
-  //     );
-  //   } else if (user.status === "approved") {
-  //     await this.sendFinalMenu(ctx, userId);
-  //   } else {
-  //     await ctx.reply("❌ Sizning ro'yxatdan o'tishingiz rad etildi.");
-  //   }
-  // }
-
-  // async approveUser(userId: number) {
-  //   const user = await this.botModel.findByPk(userId);
-  //   if (user) {
-  //     user.status = "approved";
-  //     await user.save();
-  //   }
-  // }
-
-  // async rejectUser(userId: number) {
-  //   const user = await this.botModel.findByPk(userId);
-  //   if (user) {
-  //     user.status = "rejected";
-  //     await user.save();
-  //   }
-  // }
-
-  // async sendFinalMenu(ctx: Context, userId: number) {
-  //   await ctx.reply(
-  //     "✅ Admin ma'lumotlaringizni tasdiqladi. Quyidagi menyudan foydalanishingiz mumkin:",
-  //     {
-  //       parse_mode: "HTML",
-  //       ...Markup.keyboard([
-  //         ["📋 Mijozlar"],
-  //         ["⏳ Vaqt"],
-  //         ["⭐ Reyting"],
-  //         ["⚙️ Ma'lumotlarni o'zgartirish"],
-  //       ])
-  //         .resize()
-  //         .oneTime(),
-  //     }
-  //   );
-  // }
-
-  async sendVerificationOptions(ctx: Context, userId: number) {
-    await ctx.reply(
-      "✅ Tasdiqlash tugmasi bosilganda usta tomonidan kiritilgan ma'lumotlar tasdiqlash uchun adminga yuboriladi. So‘ngra quyidagi tugmalar ko‘rsatiladi:",
-      {
-        parse_mode: "HTML",
-        ...Markup.keyboard([
-          ["🕵️ Tekshirish"],
-          ["❌ Bekor qilish"],
-          ["📞 Admin bilan bog‘lanish"],
-        ])
-          .resize()
-          .oneTime(),
-      }
-    );
-  }
 
   async checkVerificationStatus(ctx: Context, userId: number) {
     const user = await this.botModel.findByPk(userId);
 
     if (!user) {
       await ctx.reply(
-        "🚫 Siz hali ro‘yxatdan o‘tmagansiz. Iltimos, /start bosing."
+        "🚫 Siz hali ro'yxatdan o'tmagansiz. Iltimos, /start bosing."
       );
       return;
     }
 
     if (user.status === "pending") {
       await ctx.reply(
-        "🕵️ Admin ma’lumotlaringizni hali tasdiqlamagan. Qayta tekshirish uchun kuting.",
+        "Ma'lumotlaringiz hali tasdiqlanmagan. Qayta tekshirish uchun kuting.",
         {
           parse_mode: "HTML",
           ...Markup.keyboard([
             ["🕵️ Tekshirish"],
             ["❌ Bekor qilish"],
-            ["📞 Admin bilan bog‘lanish"],
+            ["📞 Admin bilan bog'lanish"],
           ])
             .resize()
             .oneTime(),
@@ -606,7 +493,7 @@ export class BotService {
     } else if (user.status === "approved") {
       await this.sendFinalMenu(ctx, userId);
     } else {
-      await ctx.reply("❌ Sizning ro‘yxatdan o‘tishingiz rad etildi.");
+      await ctx.reply("❌ Sizning ro'yxatdan o'tishingiz rad etildi.");
     }
   }
 
@@ -628,7 +515,7 @@ export class BotService {
 
   async sendFinalMenu(ctx: Context, userId: number) {
     await ctx.reply(
-      "✅ Admin ma’lumotlaringizni tasdiqladi. Quyidagi menyudan foydalanishingiz mumkin:",
+      "Ma'lumotlaringiz tasdiqlandi.",
       {
         parse_mode: "HTML",
         ...Markup.keyboard([
@@ -644,8 +531,7 @@ export class BotService {
   }
   async deleteUnCatchMessage(ctx: Context) {
     try {
-      console.log(3333333);
-      
+
       const contextmessage = ctx.message!.message_id;
       await ctx.deleteMessage(contextmessage);
     } catch (error) {
@@ -656,18 +542,15 @@ export class BotService {
   //--------------------------Admin---------------------------
 
   async showAdminPanel(ctx: Context) {
-    await ctx.reply(
-      "⚙️ Admin paneliga xush kelibsiz! Quyidagi bo'limlardan birini tanlang:",
-      {
-        parse_mode: "HTML",
-        ...Markup.keyboard([
-          ["📋 Foydalanuvchilar ro'yxati"],
-          ["➕ Yangi foydalanuvchi qo'shish", "🗑 Foydalanuvchini o'chirish"],
-        ])
-          .resize()
-          .oneTime(),
-      }
-    );
+    await ctx.reply(" Admin paneliga xush kelibsiz!", {
+      parse_mode: "HTML",
+      ...Markup.keyboard([
+        ["📋 Foydalanuvchilar ro'yxati"],
+        ["➕ Yangi foydalanuvchi qo'shish", "🗑 Foydalanuvchini o'chirish"],
+      ])
+        .resize()
+        .oneTime(),
+    });
   }
 
   async listUsers(ctx: Context) {
@@ -743,7 +626,7 @@ export class BotService {
     const adminId = 1234567890; // 🔴 BU YERGA ADMIN ID NI KIRITING
     await ctx.telegram.sendMessage(
       adminId,
-      `📌 <b>Yangi usta ro‘yxatdan o‘tdi!</b>\n\n` +
+      `📌 <b>Yangi usta ro'yxatdan o'tdi!</b>\n\n` +
         `👤 Ism: ${user.name}\n` +
         `📞 Telefon: ${user.telefon}\n` +
         `🏠 Ustaxona: ${user.ustaxona || "Kiritilmagan"}\n` +
@@ -760,9 +643,9 @@ export class BotService {
       }
     );
 
-    // Foydalanuvchiga tasdiqlash jarayoni haqida ma’lumot berish
+    // Foydalanuvchiga tasdiqlash jarayoni haqida ma'lumot berish
     await ctx.reply(
-      "✅ Ma'lumotlaringiz adminga jo‘natildi. Tasdiqlash jarayoni kutilmoqda."
+      "✅ Ma'lumotlaringiz adminga jo'natildi. Tasdiqlash jarayoni kutilmoqda."
     );
   }
 }
