@@ -405,7 +405,7 @@ export class BotService {
 
       await ctx.telegram.sendMessage(
         adminId,
-        `🔔 Yangi ustaning ma'lumotlari tasdiqlash uchun yuborildi:\n\n` +
+        `🔔 Yangi Usta ma'lumotlari tasdiqlang:\n\n` +
           `👤 Ism: ${userData.name}\n` +
           `📞 Telefon: ${userData.phone}\n` +
           `🏠 Ustaxona: ${userData.workshop || "Kiritilmagan"}\n` +
@@ -422,12 +422,11 @@ export class BotService {
       );
 
       await ctx.reply(
-        "✅ Ma'lumotlaringiz adminga jo'natildi. Tez orada tasdiqlangandan so'ng xabar beramiz.",
+        "✅ Ma'lumotlaringiz adminga jo'natildi.",
         {
           parse_mode: "HTML",
           ...Markup.keyboard([
-            ["🕵️ Tekshirish"],
-            ["❌ Bekor qilish"],
+            ["🕵️ Tekshirish","❌ Bekor qilish"],
             ["📞 Admin bilan bog'lanish"],
           ])
             .resize()
@@ -452,7 +451,7 @@ export class BotService {
     this.userData.delete(userId);
 
     await ctx.reply(
-      "❌ Ro'yxatdan o'tish bekor qilindi. Qayta boshlash uchun quyidagi tugmani bosing:",
+      "❌ Ro'yxatdan o'tish bekor qilindi. Qayta boshlash uchun /start tugmasini bosing:",
       {
         parse_mode: "HTML",
         ...Markup.keyboard([["/start"]])
@@ -474,12 +473,11 @@ export class BotService {
 
     if (user.status === "pending") {
       await ctx.reply(
-        "Ma'lumotlaringiz hali tasdiqlanmagan. Qayta tekshirish uchun kuting.",
+        "Ma'lumotlaringiz hali tasdiqlanmagan.",
         {
           parse_mode: "HTML",
           ...Markup.keyboard([
-            ["🕵️ Tekshirish"],
-            ["❌ Bekor qilish"],
+            ["🕵️ Tekshirish","❌ Bekor qilish"],
             ["📞 Admin bilan bog'lanish"],
           ])
             .resize()
@@ -536,15 +534,27 @@ export class BotService {
   //--------------------------Admin---------------------------
 
   async showAdminPanel(ctx: Context) {
-    await ctx.reply(" Admin paneliga xush kelibsiz!", {
-      parse_mode: "HTML",
-      ...Markup.keyboard([
-        ["📋 Foydalanuvchilar ro'yxati"],
-        ["➕ Yangi foydalanuvchi qo'shish", "🗑 Foydalanuvchini o'chirish"],
-      ])
-        .resize()
-        .oneTime(),
-    });
+    const adminId = process.env.ADMIN_ID
+
+    if (adminId == ctx.from?.id) {
+       await ctx.reply(" Admin paneliga xush kelibsiz!", {
+         parse_mode: "HTML",
+         ...Markup.keyboard([
+           ["📋 Foydalanuvchilar ro'yxati","🛠Mutaxasislik qo'shish"],
+           ["➕ Foydalanuvchi qo'shish", "🗑 Foydalanuvchini o'chirish"],
+         ])
+           .resize()
+           .oneTime(),
+       });
+    }else{
+      await ctx.reply("Sizda admin huquqi yo'q", {
+        parse_mode: "HTML",
+        ...Markup.keyboard(["/start" ])
+          .resize()
+          .oneTime(),
+      });
+    }
+   
   }
 
   async listUsers(ctx: Context) {
@@ -576,36 +586,7 @@ export class BotService {
     this.userSteps.set(adminId, "deleteUser");
     await ctx.reply("🗑 O'chirmoqchi bo'lgan foydalanuvchi ID sini kiriting:");
   }
-  // async approveUser(ctx: Context, userId: number) {
-  //   const user = await this.findUserById(userId);
-  //   if (user) {
-  //     user.status = "approved";
-  //     await user.save();
-
-  //     await this.bot.telegram.sendMessage(
-  //       userId,
-  //       "✅ Sizning ustaxona ro'yxatdan o'tish arizangiz tasdiqlandi!"
-  //     );
-
-  //     await ctx.answerCbQuery("✅ Tasdiqlandi!");
-  //   }
-  // }
-
-  // async rejectUser(ctx: Context, userId: number) {
-  //   const user = await this.findUserById(userId);
-  //   if (user) {
-  //     user.status = "rejected";
-  //     await user.save();
-
-  //     await this.bot.telegram.sendMessage(
-  //       userId,
-  //       "❌ Sizning ustaxona ro'yxatdan o'tish arizangiz rad etildi."
-  //     );
-
-  //     await ctx.answerCbQuery("❌ Rad etildi!");
-  //   }
-  // }
-
+  
   async sendToAdminForApproval(ctx: Context, userId: number) {
     const adminId = process.env.ADMIN_ID!;
     if (!adminId) {
@@ -642,11 +623,8 @@ export class BotService {
         }
       );
 
-      await ctx.reply(
-        "✅ Ma'lumotlaringiz adminga jo'natildi. Tasdiqlash jarayoni kutilmoqda."
-      );
+      
 
-      console.log(`✅ Usta ID ${userId} ma'lumotlari adminga yuborildi.`);
     } catch (error) {
       console.error("❌ Admin ID ga xabar yuborishda xatolik:", error);
       await ctx.reply(

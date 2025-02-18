@@ -53,9 +53,14 @@ export class BotUpdate {
 
   @Hears(["✅ Qabul qilish"])
   async QabulQilish(@Ctx() ctx: Context) {
-    
     await ctx.reply("✅ Tasdiqlash so'rovi qabul qilindi.");
     await this.botService.confirmData(ctx);
+  }
+
+  @Hears(["❌ Bekor qilish"])
+  async BekorQilish(@Ctx() ctx: Context) {
+    await ctx.reply("");
+    await this.botService.cancelData(ctx);
   }
 
   @On("contact")

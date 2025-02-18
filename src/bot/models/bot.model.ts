@@ -26,6 +26,7 @@ export class Bot extends Model<Bot, IBotCReationAttr> {
     primaryKey: true,
   })
   userId: number;
+  
   @Column({
     type: DataType.STRING,
   })
