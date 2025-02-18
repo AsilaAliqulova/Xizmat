@@ -401,7 +401,7 @@ export class BotService {
         });
       }
 
-       const adminId = process.env.ADMIN_ID!;
+      const adminId = process.env.ADMIN_ID!;
 
       await ctx.telegram.sendMessage(
         adminId,
@@ -416,13 +416,11 @@ export class BotService {
         {
           parse_mode: "HTML",
           ...Markup.inlineKeyboard([
-            [Markup.button.callback("✅ Tasdiqlash", `approve_${userId}`)],
-            [Markup.button.callback("❌ Bekor qilish", `reject_${userId}`)],
+            [Markup.button.callback("✅ Qabul qilish", `approve_${userId}`),Markup.button.callback("❌ Bekor qilish", `reject_${userId}`)],
           ]),
         }
       );
 
-    
       await ctx.reply(
         "✅ Ma'lumotlaringiz adminga jo'natildi. Tez orada tasdiqlangandan so'ng xabar beramiz.",
         {
@@ -464,8 +462,6 @@ export class BotService {
     );
   }
 
-
-
   async checkVerificationStatus(ctx: Context, userId: number) {
     const user = await this.botModel.findByPk(userId);
 
@@ -502,6 +498,8 @@ export class BotService {
     if (user) {
       user.status = "approved";
       await user.save();
+      console.log("user approved");
+      
     }
   }
 
@@ -514,24 +512,20 @@ export class BotService {
   }
 
   async sendFinalMenu(ctx: Context, userId: number) {
-    await ctx.reply(
-      "Ma'lumotlaringiz tasdiqlandi.",
-      {
-        parse_mode: "HTML",
-        ...Markup.keyboard([
-          ["📋 Mijozlar"],
-          ["⏳ Vaqt"],
-          ["⭐ Reyting"],
-          ["⚙️ Ma'lumotlarni o'zgartirish"],
-        ])
-          .resize()
-          .oneTime(),
-      }
-    );
+    await ctx.reply("Ma'lumotlaringiz tasdiqlandi.", {
+      parse_mode: "HTML",
+      ...Markup.keyboard([
+        ["📋 Mijozlar"],
+        ["⏳ Vaqt"],
+        ["⭐ Reyting"],
+        ["⚙️ Ma'lumotlarni o'zgartirish"],
+      ])
+        .resize()
+        .oneTime(),
+    });
   }
   async deleteUnCatchMessage(ctx: Context) {
     try {
-
       const contextmessage = ctx.message!.message_id;
       await ctx.deleteMessage(contextmessage);
     } catch (error) {
@@ -556,9 +550,7 @@ export class BotService {
   async listUsers(ctx: Context) {
     const adminId = ctx.from!.id;
 
-    // **Adminligini tekshirish**
-
-    const users = await this.botModel.findAll(); // Barcha foydalanuvchilarni olish
+    const users = await this.botModel.findAll();
 
     if (users.length === 0) {
       await ctx.reply("📭 Hech qanday foydalanuvchi topilmadi.");
@@ -615,37 +607,51 @@ export class BotService {
   // }
 
   async sendToAdminForApproval(ctx: Context, userId: number) {
-    const user = await this.botModel.findByPk(userId);
+    const adminId = process.env.ADMIN_ID!;
+    if (!adminId) {
+      console.log("❌ ADMIN_ID topilmadi.");
+      await ctx.reply(
+        "❌ ADMIN_ID sozlanmagan. Bot administratoriga murojaat qiling."
+      );
+      return;
+    }
 
+    const user = await this.botModel.findByPk(userId);
     if (!user) {
+      console.log(`❌ Foydalanuvchi ID ${userId} topilmadi.`);
       await ctx.reply("❌ Foydalanuvchi topilmadi.");
       return;
     }
 
-    // Adminga foydalanuvchi ma'lumotlarini yuborish
-    const adminId = 1234567890; // 🔴 BU YERGA ADMIN ID NI KIRITING
-    await ctx.telegram.sendMessage(
-      adminId,
-      `📌 <b>Yangi usta ro'yxatdan o'tdi!</b>\n\n` +
-        `👤 Ism: ${user.name}\n` +
-        `📞 Telefon: ${user.telefon}\n` +
-        `🏠 Ustaxona: ${user.ustaxona || "Kiritilmagan"}\n` +
-        `📍 Manzil: ${user.manzil || "Kiritilmagan"}\n` +
-        `🕒 Ish vaqti: ${user.boshlashVaqti} - ${user.yakunlashVaqti}\n` +
-        `⏳ Har mijoz uchun o'rtacha vaqt: ${user.sarflanadiganVaqt} min\n\n` +
-        `✅ Tasdiqlash yoki ❌ Bekor qilish uchun tugmalardan foydalaning.`,
-      {
-        parse_mode: "HTML",
-        ...Markup.inlineKeyboard([
-          [Markup.button.callback("✅ Tasdiqlash", `approve_${userId}`)],
-          [Markup.button.callback("❌ Bekor qilish", `reject_${userId}`)],
-        ]),
-      }
-    );
+    try {
+      await ctx.telegram.sendMessage(
+        adminId,
+        `📌 <b>Yangi usta ro'yxatdan o'tdi!</b>\n\n` +
+          `👤 Ism: ${user.name}\n` +
+          `📞 Telefon: ${user.telefon}\n` +
+          `🏠 Ustaxona: ${user.ustaxona || "Kiritilmagan"}\n` +
+          `📍 Manzil: ${user.manzil || "Kiritilmagan"}\n` +
+          `🕒 Ish vaqti: ${user.boshlashVaqti} - ${user.yakunlashVaqti}\n` +
+          `⏳ Har mijoz uchun o'rtacha vaqt: ${user.sarflanadiganVaqt} min\n\n` +
+          `✅ Tasdiqlash yoki ❌ Bekor qilish uchun tugmalardan foydalaning.`,
+        {
+          parse_mode: "HTML",
+          ...Markup.inlineKeyboard([
+            [Markup.button.callback("✅ Tasdiqlash", `approve_${userId}`),Markup.button.callback("❌ Bekor qilish", `reject_${userId}`)],
+          ]),
+        }
+      );
 
-    // Foydalanuvchiga tasdiqlash jarayoni haqida ma'lumot berish
-    await ctx.reply(
-      "✅ Ma'lumotlaringiz adminga jo'natildi. Tasdiqlash jarayoni kutilmoqda."
-    );
+      await ctx.reply(
+        "✅ Ma'lumotlaringiz adminga jo'natildi. Tasdiqlash jarayoni kutilmoqda."
+      );
+
+      console.log(`✅ Usta ID ${userId} ma'lumotlari adminga yuborildi.`);
+    } catch (error) {
+      console.error("❌ Admin ID ga xabar yuborishda xatolik:", error);
+      await ctx.reply(
+        "❌ Admin bilan bog'lanib bo'lmadi. Iltimos, keyinroq urinib ko'ring."
+      );
+    }
   }
 }

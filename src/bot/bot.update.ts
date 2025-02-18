@@ -1,4 +1,12 @@
-import { Update, Ctx, Start, On, Hears, Command, InjectBot } from "nestjs-telegraf";
+import {
+  Update,
+  Ctx,
+  Start,
+  On,
+  Hears,
+  Command,
+  InjectBot,
+} from "nestjs-telegraf";
 import { Context, Telegraf } from "telegraf";
 import { BotService } from "./bot.service";
 import { BOT_NAME } from "../app.constants";
@@ -21,14 +29,33 @@ export class BotUpdate {
     await this.botService.onStop(ctx);
   }
 
-  @Command("/admin")
+  @Command("admin")
   async showAdminPanel(@Ctx() ctx: Context) {
     await this.botService.showAdminPanel(ctx);
+  }
+
+  @Hears(["📋 Foydalanuvchilar ro'yxati"])
+  async AllUser(@Ctx() ctx: Context) {
+    await this.botService.listUsers(ctx);
   }
 
   @Hears(["Usta", "Mijoz"])
   async onRoleSelection(@Ctx() ctx: Context) {
     await this.botService.onRoleSelection(ctx);
+  }
+
+  @Hears(["✅ Tasdiqlash"])
+  async CheckAdmin(@Ctx() ctx: Context) {
+    console.log("✅ Tasdiqlash tugmasi bosildi!");
+    await ctx.reply("✅ Tasdiqlash so'rovi qabul qilindi.");
+    await this.botService.sendToAdminForApproval(ctx, ctx.from!.id);
+  }
+
+  @Hears(["✅ Qabul qilish"])
+  async QabulQilish(@Ctx() ctx: Context) {
+    
+    await ctx.reply("✅ Tasdiqlash so'rovi qabul qilindi.");
+    await this.botService.confirmData(ctx);
   }
 
   @On("contact")
@@ -162,8 +189,8 @@ export class BotUpdate {
     }
   }
 
-  @On("message")
-  async deleteUnCatchMessage(@Ctx() ctx: Context) {
-    await this.botService.deleteUnCatchMessage(ctx);
-  }
+  // @On("message")
+  // async deleteUnCatchMessage(@Ctx() ctx: Context) {
+  //   await this.botService.deleteUnCatchMessage(ctx);
+  // }
 }
